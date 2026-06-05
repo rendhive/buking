@@ -1,0 +1,6 @@
+{
+  "name": "Odoo 17 Internal Asset Booking Module Generator",
+  "description": "Interactive developer workbench for Odoo 17 custom internal_asset_booking module, including live Odoo UI simulation (Calendar, Tree, Form views), ORM database constraint visualizer, and complete copy-pasteable Python/XML code files.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
