@@ -25,22 +25,27 @@ import {
   ChevronRight, 
   Database,
   Terminal,
-  Info
+  Info,
+  Car,
+  Building2,
+  Eye
 } from 'lucide-react';
 
 const INITIAL_ASSETS: Asset[] = [
-  { id: 1, name: 'Ruang Meeting Ciliwung Lt.3', code: 'AST/ROOM-01', category: 'room', description: 'Kapasitas 12 orang, dilengkapi Proyektor 4K, smart whiteboard, AC, dan sound system.', active: true },
-  { id: 2, name: 'Mobil Avanza (B 1234 XYZ)', code: 'AST/VEH-01', category: 'vehicle', description: 'Kendaraan operasional Avanza Veloz putih bensin penuh, e-toll siap pakai.', active: true },
-  { id: 3, name: 'Projector Sony Wireless 4K', code: 'AST/EQ-01', category: 'equipment', description: 'Portabel projector ultra HD, lengkap dengan HDMI switcher dan tripod.', active: true },
-  { id: 4, name: 'Ruang Podcast Studio Creative', code: 'AST/ROOM-02', category: 'room', description: 'Kedap suara. Perlengkapan 4 Mic Shure SM7B, Mixer Rodecaster Pro II.', active: true },
-  { id: 5, name: 'iPad Pro M4 (Operasional Samping)', code: 'AST/EQ-02', category: 'equipment', description: 'Dilengkapi Apple Pencil & Magic Keyboard untuk presentasi eksternal.', active: false },
+  { id: 1, name: 'Ruangan 1', code: 'AST/ROOM-01', category: 'room', description: 'Kapasitas 10 orang, dilengkapi smart TV, AC, dan glass whiteboard.', active: true },
+  { id: 2, name: 'Ruangan 2', code: 'AST/ROOM-02', category: 'room', description: 'Kapasitas 15 orang, dilengkapi Proyektor HD, AC, dan audio system.', active: true },
+  { id: 3, name: 'Ruangan 3', code: 'AST/ROOM-03', category: 'room', description: 'Kapasitas 6 orang, sangat cocok untuk meeting internal harian.', active: true },
+  { id: 4, name: 'Ruangan 4', code: 'AST/ROOM-04', category: 'room', description: 'Kapasitas 25 orang, dilengkapi fasilitas webinar hybrid audio visual.', active: true },
+  { id: 5, name: 'Mobil 1', code: 'AST/VEH-01', category: 'vehicle', description: 'Toyota Avanza Veloz putih, transmisi matic, bensin penuh, e-toll siap pakai.', active: true },
+  { id: 6, name: 'Mobil 2', code: 'AST/VEH-02', category: 'vehicle', description: 'Toyota Innova Reborn hitam, transmisi matic, sedia untuk direksi & operasional dinas.', active: true },
+  { id: 7, name: 'Mobil 3', code: 'AST/VEH-03', category: 'vehicle', description: 'HiAce Commuter putih, kapasitas 15 orang, bensin penuh untuk rombongan luar kota.', active: true },
 ];
 
 const INITIAL_BOOKINGS: Booking[] = [
   {
     id: 1,
     asset_id: 1,
-    asset_name: 'Ruang Meeting Ciliwung Lt.3',
+    asset_name: 'Ruangan 1',
     borrower_name: 'Budi Santoso',
     whatsapp_number: '6281234567890',
     start_datetime: '2026-06-05T09:00',
@@ -50,8 +55,8 @@ const INITIAL_BOOKINGS: Booking[] = [
   },
   {
     id: 2,
-    asset_id: 2,
-    asset_name: 'Mobil Avanza (B 1234 XYZ)',
+    asset_id: 5,
+    asset_name: 'Mobil 1',
     borrower_name: 'Siti Rahma',
     whatsapp_number: '6285711223344',
     start_datetime: '2026-06-05T13:00',
@@ -62,7 +67,7 @@ const INITIAL_BOOKINGS: Booking[] = [
   {
     id: 3,
     asset_id: 1,
-    asset_name: 'Ruang Meeting Ciliwung Lt.3',
+    asset_name: 'Ruangan 1',
     borrower_name: 'Ahmad Faisal',
     whatsapp_number: '628998877665',
     start_datetime: '2026-06-06T10:00',
@@ -72,13 +77,13 @@ const INITIAL_BOOKINGS: Booking[] = [
   },
   {
     id: 4,
-    asset_id: 3,
-    asset_name: 'Projector Sony Wireless 4K',
+    asset_id: 2,
+    asset_name: 'Ruangan 2',
     borrower_name: 'Jessica Iskandar',
     whatsapp_number: '6281122334455',
     start_datetime: '2026-06-05T08:00',
     end_datetime: '2026-06-05T16:00',
-    purpose: 'Demo produk ke client eksternal di Ballroom Hotel Fairmont.',
+    purpose: 'Demo produk ke client eksternal di Ballroom.',
     state: 'confirmed'
   }
 ];
@@ -95,6 +100,54 @@ export default function OdooSimulator({ onLogTriggered }: OdooSimulatorProps) {
   const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Statistics States
+  const [selectedStatsDate, setSelectedStatsDate] = useState('2026-06-05');
+  const [showAvailableVehicles, setShowAvailableVehicles] = useState(false);
+
+  // Room statistical computations
+  const roomStats = useMemo(() => {
+    const rooms = assets.filter(a => a.category === 'room');
+    
+    // Find active confirmed or draft bookings on selected date
+    const bookedIis = bookings
+      .filter(b => b.start_datetime.startsWith(selectedStatsDate) && b.state !== 'cancelled')
+      .map(b => b.asset_id);
+    
+    const uniqueBookedIds = Array.from(new Set(bookedIis));
+    const terpakaiRooms = rooms.filter(r => uniqueBookedIds.includes(r.id));
+    const tidakTerpakaiRooms = rooms.filter(r => !uniqueBookedIds.includes(r.id));
+    
+    return {
+      total: rooms.length,
+      terpakaiCount: terpakaiRooms.length,
+      tidakTerpakaiCount: tidakTerpakaiRooms.length,
+      terpakaiList: terpakaiRooms,
+      tidakTerpakaiList: tidakTerpakaiRooms
+    };
+  }, [assets, bookings, selectedStatsDate]);
+
+  // Vehicle statistical computations
+  const vehicleStats = useMemo(() => {
+    const vehicles = assets.filter(a => a.category === 'vehicle');
+    
+    // Find active confirmed or draft bookings on selected date
+    const bookedIis = bookings
+      .filter(b => b.start_datetime.startsWith(selectedStatsDate) && b.state !== 'cancelled')
+      .map(b => b.asset_id);
+    
+    const uniqueBookedIds = Array.from(new Set(bookedIis));
+    const terpakaiVehicles = vehicles.filter(v => uniqueBookedIds.includes(v.id));
+    const tidakTerpakaiVehicles = vehicles.filter(v => !uniqueBookedIds.includes(v.id));
+    
+    return {
+      total: vehicles.length,
+      terpakaiCount: terpakaiVehicles.length,
+      tidakTerpakaiCount: tidakTerpakaiVehicles.length,
+      terpakaiList: terpakaiVehicles,
+      tidakTerpakaiList: tidakTerpakaiVehicles
+    };
+  }, [assets, bookings, selectedStatsDate]);
   
   // Form Edit/Create parameters
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
@@ -544,6 +597,197 @@ export default function OdooSimulator({ onLogTriggered }: OdooSimulatorProps) {
               )}
             </div>
           </div>
+
+          {/* INTERACTIVE CALCULATION DASHBOARD */}
+          {currentMenu === 'bookings' && currentView !== 'form' && (
+            <div id="assets-analytics-dashboard" className="mb-6 bg-gradient-to-br from-zinc-50 to-zinc-100/50 p-5 rounded-2xl border border-zinc-200 shadow-3xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-200/85">
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                    <Database className="w-4 h-4 text-[#714B67]" />
+                    Real-time Kalkulasi Keterpakaian Aset
+                  </h2>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">
+                    Menghitung sirkulasi ketersediaan ruangan rapat dan kendaraan berdasarkan tanggal di bawah ini.
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-zinc-500 font-mono uppercase tracking-wide">Tanggal Kalkulasi:</span>
+                  <input
+                    type="date"
+                    value={selectedStatsDate}
+                    onChange={(e) => {
+                      setSelectedStatsDate(e.target.value);
+                      generateOrmLog('info', `Recalculating statistics: Changed date filter to ${e.target.value}.`);
+                    }}
+                    className="bg-white border border-zinc-200 rounded-xl px-3 py-1.5 text-xs text-zinc-800 font-bold outline-none focus:border-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              {/* Grid of Calculations */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* 🏢 Rooms Card */}
+                <div className="bg-white p-4 rounded-xl border border-zinc-200 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4 text-sky-600" />
+                        Aset Ruangan (Total: {roomStats.total})
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-400">Category: room</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-rose-50/50 border border-rose-100 p-2.5 rounded-lg text-center">
+                        <span className="text-[10px] block font-semibold text-rose-600 mb-0.5">TERPAKAI</span>
+                        <span className="text-lg font-extrabold text-rose-700 font-mono">{roomStats.terpakaiCount}</span>
+                        <span className="text-[9px] text-rose-500 block mt-0.5">Ruang Rapat</span>
+                      </div>
+                      <div className="bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-lg text-center">
+                        <span className="text-[10px] block font-semibold text-emerald-600 mb-0.5">TIDAK TERPAKAI (TERSEDIA)</span>
+                        <span className="text-lg font-extrabold text-emerald-700 font-mono">{roomStats.tidakTerpakaiCount}</span>
+                        <span className="text-[9px] text-emerald-500 block mt-0.5">Siap Digunakan</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* List of Rooms */}
+                  <div className="text-[11px] border-t border-zinc-100 pt-3 space-y-1">
+                    <span className="text-[9px] font-extrabold text-zinc-450 uppercase tracking-widest font-mono block mb-1">Status Asset Ruangan ({selectedStatsDate}):</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {assets.filter(a => a.category === 'room').map(r => {
+                        const isTerpakai = roomStats.terpakaiList.some(tr => tr.id === r.id);
+                        return (
+                          <div key={r.id} className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${isTerpakai ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+                            <span className="text-zinc-700 font-medium truncate" title={r.name}>{r.name}</span>
+                            <span className={`text-[8px] px-1 rounded ${isTerpakai ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                              {isTerpakai ? 'Terpakai' : 'Bebas'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 🚗 Vehicles Card */}
+                <div className="bg-white p-4 rounded-xl border border-zinc-200 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
+                        <Car className="w-4 h-4 text-emerald-600" />
+                        Aset Kendaraan (Total: {vehicleStats.total})
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-400">Category: vehicle</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-rose-50/50 border border-rose-100 p-2.5 rounded-lg text-center">
+                        <span className="text-[10px] block font-semibold text-rose-600 mb-0.5">TERPAKAI</span>
+                        <span className="text-lg font-extrabold text-rose-700 font-mono">{vehicleStats.terpakaiCount}</span>
+                        <span className="text-[9px] text-rose-550 block mt-0.5">Sedang Digunakan</span>
+                      </div>
+                      
+                      {/* Clickable stat card for available vehicles */}
+                      <button
+                        onClick={() => {
+                          setShowAvailableVehicles(!showAvailableVehicles);
+                          generateOrmLog('info', `User interaction: Toggled list of available vehicle types to state: ${!showAvailableVehicles}`);
+                        }}
+                        className="bg-emerald-50 hover:bg-emerald-100/75 border border-emerald-200 p-2.5 rounded-lg text-center cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 flex flex-col justify-center items-center"
+                        title="Klik untuk melihat jenis semua kendaraan yang tersedia"
+                      >
+                        <span className="text-[10px] block font-bold text-emerald-700 mb-0.5 uppercase tracking-tight flex items-center gap-1 justify-center">
+                          KENDARAAN TERSEDIA <Eye className="w-3.5 h-3.5 inline text-emerald-600" />
+                        </span>
+                        <span className="text-lg font-extrabold text-emerald-800 font-mono flex items-center gap-1.5">
+                          {vehicleStats.tidakTerpakaiCount} <span className="text-xs font-semibold text-emerald-600">Mobil</span>
+                        </span>
+                        <span className="text-[8px] bg-emerald-650 text-white rounded px-1.5 mt-0.5 uppercase font-extrabold tracking-widest leading-relaxed">Klik Detail</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Status checklist of Vehicles list */}
+                  <div className="text-[11px] border-t border-zinc-100 pt-3 space-y-1">
+                    <span className="text-[9px] font-extrabold text-zinc-450 uppercase tracking-widest font-mono block mb-1">Status Kendaraan Operasional ({selectedStatsDate}):</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {assets.filter(a => a.category === 'vehicle').map(v => {
+                        const isTerpakai = vehicleStats.terpakaiList.some(tv => tv.id === v.id);
+                        return (
+                          <div key={v.id} className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${isTerpakai ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+                            <span className="text-zinc-700 font-medium truncate" title={v.name}>{v.name}</span>
+                            <span className={`text-[8px] px-1 rounded ${isTerpakai ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                              {isTerpakai ? 'Terpakai' : 'Bebas'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* EXPANDED SECTION: "Pilihan Jenis Kendaraan Tersedia" */}
+              {showAvailableVehicles && (
+                <div id="available-vehicles-expanded" className="bg-emerald-50/45 border border-emerald-250 p-4 rounded-xl text-xs space-y-3 shadow-2xs transition-all duration-300">
+                  <div className="flex justify-between items-center pb-2 border-b border-rose-200/20">
+                    <span className="font-bold text-emerald-900 flex items-center gap-1.5 uppercase tracking-wide">
+                      <Car className="w-4 h-4 text-emerald-600" />
+                      Daftar Katalog Kendaraan Tersedia untuk Tanggal {selectedStatsDate}
+                    </span>
+                    <button
+                      onClick={() => setShowAvailableVehicles(false)}
+                      className="text-zinc-400 hover:text-zinc-650 p-1 hover:bg-emerald-100 rounded-lg cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {vehicleStats.tidakTerpakaiCount === 0 ? (
+                    <div className="py-2 text-center text-zinc-500 italic font-medium bg-white rounded-lg border border-zinc-150 p-3">
+                      ⚠️ Maaf, tidak ada kendaraan operasional yang bebas untuk tanggal terpilih. Semua sedang dibooking.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {vehicleStats.tidakTerpakaiList.map(v => (
+                        <div key={v.id} className="bg-white p-3.5 rounded-lg border border-emerald-150 flex flex-col justify-between hover:border-emerald-350 transition-all shadow-3xs">
+                          <div>
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-[9px] font-mono font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">{v.code}</span>
+                              <span className="bg-emerald-600 text-white font-extrabold text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest leading-none">Ready</span>
+                            </div>
+                            <span className="font-bold text-zinc-900 text-xs block mb-1">{v.name}</span>
+                            <span className="text-[10px] text-zinc-500 leading-relaxed block mb-2">{v.description}</span>
+                          </div>
+
+                          <div className="mt-2 pt-2 border-t border-zinc-100">
+                            <button
+                              onClick={() => {
+                                handleOpenCreateForm({
+                                  asset_id: v.id,
+                                  start_datetime: `${selectedStatsDate}T09:00`,
+                                  end_datetime: `${selectedStatsDate}T12:00`
+                                });
+                                generateOrmLog('info', `Quick flow: Loaded booking creation for available vehicle '${v.name}'.`);
+                              }}
+                              className="w-full bg-[#714B67] hover:bg-[#5b3c53] text-white font-bold py-1.5 rounded-lg text-[10px] transition-colors uppercase tracking-wider cursor-pointer"
+                            >
+                              Pesan Mobil Ini
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* VIEW: ASSETS MASTER GRID */}
           {currentMenu === 'assets' && (

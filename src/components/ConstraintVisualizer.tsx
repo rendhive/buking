@@ -21,7 +21,7 @@ export default function ConstraintVisualizer() {
     // Standard mock database array representing existing reservations
     const existingBookings = [
       { id: 1, asset_id: 1, borrower: 'Budi Santoso', start: '2026-06-05T09:00', end: '2026-06-05T12:00' },
-      { id: 2, asset_id: 2, borrower: 'Siti Rahma', start: '2026-06-05T13:00', end: '2026-06-05T17:30' },
+      { id: 2, asset_id: 5, borrower: 'Siti Rahma', start: '2026-06-05T13:00', end: '2026-06-05T17:30' },
       { id: 3, asset_id: 1, borrower: 'Ahmad Faisal', start: '2026-06-06T10:00', end: '2026-06-06T12:30' }
     ];
 
@@ -105,9 +105,13 @@ WHERE asset_id = ${testAssetId}
               onChange={(e) => setTestAssetId(e.target.value)}
               className="w-full bg-zinc-50 border border-zinc-200 p-2.5 rounded-xl text-xs font-bold text-zinc-800 focus:border-zinc-500 outline-none"
             >
-              <option value="1">Ruang Meeting Ciliwung Lt.3 (Sedang Terisi 09:00 - 12:00)</option>
-              <option value="2">Mobil Avanza (Sedang Terisi 13:00 - 17:30)</option>
-              <option value="3">Projector Sony Wireless</option>
+              <option value="1">Ruangan 1 (Sedang Terisi 09:00 - 12:00)</option>
+              <option value="5">Mobil 1 (Sedang Terisi 13:00 - 17:30)</option>
+              <option value="2">Ruangan 2</option>
+              <option value="3">Ruangan 3</option>
+              <option value="4">Ruangan 4</option>
+              <option value="6">Mobil 2</option>
+              <option value="7">Mobil 3</option>
             </select>
           </div>
 
